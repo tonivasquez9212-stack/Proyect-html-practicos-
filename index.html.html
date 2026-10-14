@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Un cielo para ti</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b1030;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1030}}
+:root[data-theme="dark"]{--bg:#0b1030}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg)}
+body{background:radial-gradient(ellipse at 20% 15%,rgba(120,70,200,.35),transparent 55%),radial-gradient(ellipse at 85% 80%,rgba(230,80,140,.28),transparent 55%),linear-gradient(#080b26,#1b1147 60%,#3b1a5a);color:#fff;font-family:'Dancing Script',cursive,Georgia,serif;-webkit-user-select:none;user-select:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.t{position:fixed;left:0;right:0;text-align:center;pointer-events:none;padding:0 24px;box-sizing:border-box}
+#intro{top:38%;transition:opacity 1s;font-size:clamp(30px,8vw,52px);text-shadow:0 0 24px rgba(255,150,200,.8)}
+#intro small{display:block;font-size:.45em;opacity:.8;margin-top:10px;animation:pulse 2.4s ease-in-out infinite}
+#ph{bottom:calc(46px + env(safe-area-inset-bottom,0px));font-size:clamp(22px,6vw,34px);opacity:0;text-shadow:0 0 16px rgba(255,150,200,.9)}
+#ph.on{animation:phr 3.4s ease forwards}
+#fin{top:calc(42% - 40px);opacity:0;transition:opacity 2s;font-size:clamp(44px,13vw,86px);font-weight:700;line-height:1;text-shadow:0 0 30px #ff5c9a,0 0 60px #ff5c9a}
+#fin small{display:block;font-size:.3em;font-weight:500;margin-top:10px;text-shadow:0 0 14px #ff8fbd}
+#fin.on{opacity:1}
+#again{position:fixed;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px));background:none;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:20px;padding:6px 14px;font:inherit;font-size:18px;opacity:0;pointer-events:none;transition:opacity 1.5s}
+#again.on{opacity:.8;pointer-events:auto}
+@keyframes pulse{50%{opacity:.3}}
+@keyframes phr{0%{opacity:0;transform:translateY(10px)}15%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="t" id="intro">Toca el cielo<small>cada estrella que enciendas es algo que quiero decirte</small></div>
+<div class="t" id="ph"></div>
+<div class="t" id="fin">Te amo<small>eres lo mejor que me ha pasado</small></div>
+<button id="again">✦ otra vez</button>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d'),$=id=>document.getElementById(id);
+const N=42,PER=3,rnd=Math.random;
+const PH=["Contigo todo es más bonito","Eres mi lugar favorito","Tu risa es mi canción preferida","Gracias por quedarte","Me haces querer ser mejor","Contigo hasta lo simple es mágico","Eres mi casa","Cada día te elijo otra vez","Tu abrazo arregla mi mundo","Eres mi persona favorita","Me encanta cómo me miras","Quiero todos mis mañanas contigo","Contigo soy más yo","Casi lo logras… una más"];
+const END=["Te quiero","Gracias por existir","Contigo siempre","Eres mi todo","Mi lugar seguro","Eres mi suerte"];
+let W,H,D,stars=[],hp=[],P=[],R=[],F=[],Sp=[],Sh=[],sent=0,lit=0,flash=[],done=false,started=false,down=false,last=performance.now(),nextSh=2;
+function pts(){const cx=W/2,cy=H*.42,s=Math.min(W*.62/34,H*.46/30);return Array.from({length:N},(_,i)=>{const t=i/N*Math.PI*2;return{x:cx+s*16*Math.sin(t)**3,y:cy-s*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)),on:0,f:0}})}
+function size(){W=innerWidth;H=innerHeight;D=devicePixelRatio||1;c.width=W*D;c.height=H*D;x.setTransform(D,0,0,D,0,0);const old=hp;hp=pts();old.forEach((o,i)=>{hp[i].on=o.on});stars=Array.from({length:Math.round(W*H/5500)},()=>({x:rnd()*W,y:rnd()*H,r:.3+rnd()*1.2,p:rnd()*6,s:.5+rnd()*2}))}
+addEventListener('resize',size);size();
+function say(t){const p=$('ph');p.classList.remove('on');void p.offsetWidth;p.textContent=t;p.classList.add('on')}
+function tap(px,py){
+ if(!started){started=true;$('intro').style.opacity=0}
+ R.push({x:px,y:py,t:0});
+ if(!done){
+  if(sent<N){say(PH[Math.min(Math.floor(sent/PER),PH.length-1)]);
+   for(let k=0;k<PER&&sent<N;k++,sent++)P.push({x:px,y:py,cx:px+(rnd()-.5)*220,cy:py-60-rnd()*140,i:sent,t:-k*.14,tr:[]})}
+ }else{
+  for(let k=0;k<7;k++)F.push({x:px+(rnd()-.5)*40,y:py,vx:(rnd()-.5)*30,vy:-40-rnd()*50,a:1,s:14+rnd()*16,t:'♥'});
+  if(rnd()<.45)F.push({x:px,y:py-20,vx:0,vy:-30,a:1.4,s:20,t:END[Math.floor(rnd()*END.length)],txt:1});
+ }
+}
+function finish(){done=true;$('fin').classList.add('on');setTimeout(()=>$('again').classList.add('on'),4000);
+ for(let k=0;k<40;k++)F.push({x:W/2,y:H*.42,vx:(rnd()-.5)*220,vy:-30-rnd()*160,a:1.6,s:12+rnd()*18,t:'♥'})}
+$('again').onclick=()=>{done=false;started=false;sent=lit=0;P=[];F=[];hp.forEach(p=>p.on=0);$('fin').classList.remove('on');$('again').classList.remove('on');$('intro').style.opacity=1}
+c.addEventListener('pointerdown',e=>{down=true;tap(e.clientX,e.clientY)});
+c.addEventListener('pointermove',e=>{if(down&&rnd()<.6)Sp.push({x:e.clientX,y:e.clientY,vx:(rnd()-.5)*40,vy:(rnd()-.5)*40,a:1})});
+['pointerup','pointercancel','pointerleave'].forEach(n=>c.addEventListener(n,()=>down=false));
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+function glow(px,py,r,col,a){const g=x.createRadialGradient(px,py,0,px,py,r);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,`rgba(${col},0)`);x.fillStyle=g;x.beginPath();x.arc(px,py,r,0,7);x.fill()}
+function frame(now){
+ const dt=Math.min((now-last)/1000,.05);last=now;const T=now/1000;
+ x.clearRect(0,0,W,H);
+ for(const s of stars){x.globalAlpha=.35+.65*Math.abs(Math.sin(T*s.s+s.p));x.fillStyle='#fff';x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill()}
+ x.globalAlpha=1;
+ nextSh-=dt;if(nextSh<0){nextSh=3+rnd()*4;Sh.push({x:rnd()*W*.8,y:rnd()*H*.3,vx:380,vy:200,l:1})}
+ Sh=Sh.filter(s=>(s.l-=dt*.9)>0);for(const s of Sh){s.x+=s.vx*dt;s.y+=s.vy*dt;const g=x.createLinearGradient(s.x,s.y,s.x-90,s.y-48);g.addColorStop(0,`rgba(255,255,255,${s.l})`);g.addColorStop(1,'rgba(255,255,255,0)');x.strokeStyle=g;x.lineWidth=1.6;x.beginPath();x.moveTo(s.x,s.y);x.lineTo(s.x-90,s.y-48);x.stroke()}
+ x.globalCompositeOperation='lighter';
+ const b=done?.5+.5*Math.sin(T*2.4):0,sc=1+.025*b,cx=W/2,cy=H*.42;
+ x.save();if(done){x.translate(cx,cy);x.scale(sc,sc);x.translate(-cx,-cy)}
+ if(lit>0){x.beginPath();let st=false;hp.forEach((p,i)=>{if(p.on){st?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y);st=true}});
+  if(done){x.closePath();const g=x.createRadialGradient(cx,cy,10,cx,cy,Math.min(W,H)*.4);g.addColorStop(0,`rgba(255,90,150,${.25+.15*b})`);g.addColorStop(1,'rgba(255,90,150,.04)');x.fillStyle=g;x.fill()}
+  x.strokeStyle=`rgba(255,160,200,${done?.9:.5})`;x.lineWidth=done?2:1.2;x.shadowColor='#ff5c9a';x.shadowBlur=done?14:6;x.stroke();x.shadowBlur=0}
+ for(const p of hp){if(!p.on)continue;p.f=Math.max(0,p.f-dt*1.5);glow(p.x,p.y,10+p.f*26,'255,170,210',.55+p.f*.4);x.fillStyle='#fff';x.beginPath();x.arc(p.x,p.y,2+p.f*2.5+.6*Math.sin(T*3+p.x),0,7);x.fill()}
+ x.restore();
+ P=P.filter(p=>{p.t+=dt/1.1;if(p.t<0)return true;const t=Math.min(p.t,1),e=ease(t),q=hp[p.i],u=1-e;
+  p.px=u*u*p.x+2*u*e*p.cx+e*e*q.x;p.py=u*u*p.y+2*u*e*p.cy+e*e*q.y;p.tr.push([p.px,p.py]);if(p.tr.length>14)p.tr.shift();
+  p.tr.forEach((a,k)=>glow(a[0],a[1],4+k*.5,'255,190,225',k/p.tr.length*.5));glow(p.px,p.py,16,'255,210,235',.9);
+  if(p.t>=1){q.on=1;q.f=1;lit++;if(lit===N)finish();return false}return true});
+ R=R.filter(r=>(r.t+=dt)<1.1);for(const r of R){x.strokeStyle=`rgba(255,200,230,${1-r.t/1.1})`;x.lineWidth=2;x.beginPath();x.arc(r.x,r.y,r.t*90,0,7);x.stroke()}
+ Sp=Sp.filter(s=>(s.a-=dt*1.6)>0);for(const s of Sp){s.x+=s.vx*dt;s.y+=s.vy*dt;glow(s.x,s.y,7,'255,200,235',s.a)}
+ x.globalCompositeOperation='source-over';
+ F=F.filter(f=>(f.a-=dt*.45)>0);for(const f of F){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vx*=.99;x.globalAlpha=Math.min(1,f.a);x.fillStyle=f.txt?'#fff':'#ff6fa6';x.shadowColor='#ff5c9a';x.shadowBlur=10;x.font=f.txt?`${f.s}px 'Dancing Script',cursive`:`${f.s}px sans-serif`;x.textAlign='center';x.fillText(f.t,f.x,f.y)}
+ x.globalAlpha=1;x.shadowBlur=0;
+ requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
